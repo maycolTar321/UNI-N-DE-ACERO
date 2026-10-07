@@ -1,6 +1,6 @@
 import { Afiliado, ApiResponse, DashboardStats, Empresa } from "./types";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxUqiU_hk-K2sPkHet_qvd42XeAHvo4eaSylKs4YgvlEZl0Un_njnmqpU2v3SXEbxBtLg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyaXiTMFXUxRbbQ19H7SdCeB0MQaiKSK9uBL1KaCEHDeExrxPB6NjAYkdYTsVD3TmuMwQ/exec";
 
 export const api = {
   getAfiliados: async (): Promise<ApiResponse<Afiliado[]>> => {
