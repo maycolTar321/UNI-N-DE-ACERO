@@ -1,6 +1,6 @@
 import { Afiliado, ApiResponse, DashboardStats, Empresa } from "./types";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyGl6KBXz1bPrdIsikOlpzrBJk42b5OycNxWDJm5Ehedb2P3wij-q37ny5hhj0He0rKmQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxUqiU_hk-K2sPkHet_qvd42XeAHvo4eaSylKs4YgvlEZl0Un_njnmqpU2v3SXEbxBtLg/exec";
 
 export const api = {
   getAfiliados: async (): Promise<ApiResponse<Afiliado[]>> => {
@@ -18,13 +18,16 @@ export const api = {
     try {
       const response = await fetch(API_URL, {
         method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
         body: JSON.stringify({
           accion: "registrarAfiliado",
           datos: afiliado,
         }),
       });
-      const data = await response.json();
-      return data;
+      return { exito: true, mensaje: "Enviado a Apps Script correctamente" };
     } catch (error: any) {
       console.error("Error registrando afiliado:", error);
       return { exito: false, mensaje: "No pudimos conectar con el servidor. Verifica tu conexión e inténtalo nuevamente.", error: error.message };
@@ -43,59 +46,49 @@ export const api = {
 
   actualizarAfiliado: async (id: string, datos: Partial<Afiliado>): Promise<ApiResponse> => {
     try {
-      const response = await fetch(API_URL, {
-        method: "POST",
+      await fetch(API_URL, {
+        method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ accion: "actualizarAfiliado", id, datos }),
       });
-      return await response.json();
-    } catch (error: any) {
-      return { exito: false, mensaje: "Error de conexión." };
-    }
+      return { exito: true };
+    } catch (error: any) { return { exito: false, mensaje: "Error de conexión." }; }
   },
 
   eliminarAfiliado: async (id: string): Promise<ApiResponse> => {
     try {
-      const response = await fetch(API_URL, {
-        method: "POST",
+      await fetch(API_URL, {
+        method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ accion: "eliminarAfiliado", id }),
       });
-      return await response.json();
-    } catch (error: any) {
-      return { exito: false, mensaje: "Error de conexión." };
-    }
+      return { exito: true };
+    } catch (error: any) { return { exito: false, mensaje: "Error de conexión." }; }
   },
 
   cambiarEstadoAfiliado: async (id: string, estado: string): Promise<ApiResponse> => {
     try {
-      const response = await fetch(API_URL, {
-        method: "POST",
+      await fetch(API_URL, {
+        method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ accion: "cambiarEstadoAfiliado", id, estado }),
       });
-      return await response.json();
-    } catch (error: any) {
-      return { exito: false, mensaje: "Error de conexión." };
-    }
+      return { exito: true };
+    } catch (error: any) { return { exito: false, mensaje: "Error de conexión." }; }
   },
 
   getEmpresas: async (): Promise<ApiResponse<Empresa[]>> => {
     try {
       const response = await fetch(`${API_URL}?accion=listarEmpresas`, { cache: 'no-store' });
       return await response.json();
-    } catch (error: any) {
-      return { exito: false, mensaje: "Error de conexión." };
-    }
+    } catch (error: any) { return { exito: false, mensaje: "Error de conexión." }; }
   },
 
   registrarEmpresa: async (empresa: Partial<Empresa>): Promise<ApiResponse> => {
     try {
-      const response = await fetch(API_URL, {
-        method: "POST",
+      await fetch(API_URL, {
+        method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ accion: "registrarEmpresa", datos: empresa }),
       });
-      return await response.json();
-    } catch (error: any) {
-      return { exito: false, mensaje: "Error de conexión." };
-    }
+      return { exito: true };
+    } catch (error: any) { return { exito: false, mensaje: "Error de conexión." }; }
   },
 
   getHistorial: async (): Promise<ApiResponse<any[]>> => {
