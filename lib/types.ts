@@ -22,6 +22,18 @@ export interface Afiliado {
   fecha_registro?: string;
   registrado_por?: string;
   actualizado_en?: string;
+
+  // Nuevos campos para Expediente y Mapa
+  coordenadas_domicilio?: { lat: number; lng: number };
+  coordenadas_empresa?: { lat: number; lng: number };
+  estado_expediente?: "INCOMPLETO" | "COMPLETO" | "EN_REVISION" | "APROBADO" | "RECHAZADO";
+  estado_carnet?: "PENDIENTE" | "LISTO" | "EMITIDO";
+  documentos?: {
+    cedula: { estado: "PRESENTADO" | "PENDIENTE" | "OBSERVADO" | "NO_CORRESPONDE"; url?: string; observacion?: string };
+    croquis_domicilio: { estado: "PRESENTADO" | "PENDIENTE" | "OBSERVADO" | "NO_CORRESPONDE"; url?: string; observacion?: string };
+    croquis_empresa: { estado: "PRESENTADO" | "PENDIENTE" | "OBSERVADO" | "NO_CORRESPONDE"; url?: string; observacion?: string };
+    servicio_basico: { estado: "PRESENTADO" | "PENDIENTE" | "OBSERVADO" | "NO_CORRESPONDE"; tipo?: "AGUA" | "LUZ" | "GAS"; url?: string; observacion?: string };
+  };
 }
 
 export interface Empresa {

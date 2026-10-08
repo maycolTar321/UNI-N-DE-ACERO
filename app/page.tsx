@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, CheckCircle2, Clock, Building2, TrendingUp, AlertCircle, Plus, ArrowRight, Loader2 } from "lucide-react";
+import { Users, CheckCircle2, Clock, Building2, TrendingUp, AlertCircle, Plus, ArrowRight, Loader2, FileText } from "lucide-react";
 import { api } from "@/lib/api";
 import Link from "next/link";
 import { useSharedData } from "@/lib/useSharedData";
@@ -23,10 +23,15 @@ export default function Dashboard() {
   const error = errorAfiliados || (!afiliadosResponse?.exito && !loadingAfiliados ? afiliadosResponse?.mensaje : null);
 
   const totalAfiliados = afiliados?.length || 0;
-  const activos = afiliados?.filter(a => a.estado === 'ACTIVO').length || 0;
-  const pendientes = afiliados?.filter(a => a.estado === 'PENDIENTE').length || 0;
+  const activos = afiliados?.filter(a => a.estado === 'ACTIVO' || a.estado_expediente === 'APROBADO').length || 0;
+  const pendientes = afiliados?.filter(a => a.estado === 'PENDIENTE' || a.estado_expediente === 'INCOMPLETO').length || 0;
   const rechazados = afiliados?.filter(a => a.estado === 'RECHAZADO').length || 0;
   const totalEmpresas = empresas?.length || 0;
+
+  // Nuevas métricas de Expediente y Carnet
+  const expedientesCompletos = afiliados?.filter(a => ['COMPLETO', 'EN_REVISION', 'APROBADO'].includes(a.estado_expediente || "")).length || 0;
+  const expedientesRevision = afiliados?.filter(a => a.estado_expediente === 'EN_REVISION').length || 0;
+  const carnetsEmitidos = afiliados?.filter(a => a.estado_carnet === 'EMITIDO').length || 0;
 
   const statCards = [
     {
@@ -44,16 +49,16 @@ export default function Dashboard() {
       borderColor: "border-emerald-100",
     },
     {
-      title: "Pendientes",
+      title: "Expedientes Pend.",
       value: pendientes,
       icon: Clock,
       color: "bg-amber-50 text-amber-600",
       borderColor: "border-amber-100",
     },
     {
-      title: "Empresas",
-      value: totalEmpresas,
-      icon: Building2,
+      title: "Carnets Emitidos",
+      value: carnetsEmitidos,
+      icon: FileText,
       color: "bg-indigo-50 text-indigo-600",
       borderColor: "border-indigo-100",
     },

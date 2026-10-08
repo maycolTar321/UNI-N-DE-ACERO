@@ -24,62 +24,18 @@ export default function CarnetsPage() {
     try {
       const res = await api.getAfiliados();
       if (res.exito && res.datos) {
-        const found = res.datos.find((a: Afiliado) => a.ci?.toString() === searchCi.trim());
+        const found = res.datos.find((a: Afiliado) => a.ci?.toString() === searchCi.trim() || a.codigo_afiliado === searchCi.trim());
         if (found) {
           setAfiliado(found);
           setVigencia((found as any).vigencia_carnet || "Diciembre 2027");
         } else {
-          setAfiliado({
-            id: "mock",
-            codigo_afiliado: "UA-MOCK",
-            nombres: "MIGUEL",
-            apellidos: "RETAMOZO",
-            ci: searchCi.trim() || "7204466",
-            fecha_nacimiento: "1990-01-01",
-            sexo: "MASCULINO",
-            fotografia: "",
-            telefono: "7204466",
-            whatsapp: "7204466",
-            correo: "test@test.com",
-            direccion: "Calle 1",
-            empresa_id: "1",
-            cargo: "SOLDADOR",
-            especialidad: "SOLDADOR",
-            fecha_ingreso_laboral: "2026-01-01",
-            fecha_afiliacion: "2026-01-01",
-            tipo_afiliacion: "SINDICAL",
-            estado: "ACTIVO",
-            observaciones: ""
-          });
-          setError("Nota: Afiliado de prueba cargado. (No se encontró en la base de datos)");
+          setError("No se encontró ningún afiliado con esa cédula.");
         }
       } else {
-        throw new Error("API Falla");
+        throw new Error("Error al obtener la lista de afiliados.");
       }
     } catch (err) {
-      setAfiliado({
-        id: "mock",
-        codigo_afiliado: "UA-MOCK2",
-        nombres: "YAMIL",
-        apellidos: "YAÑEZ",
-        ci: searchCi.trim() || "123456",
-        fecha_nacimiento: "1990-01-01",
-        sexo: "MASCULINO",
-        fotografia: "",
-        telefono: "00000",
-        whatsapp: "00000",
-        correo: "test@test.com",
-        direccion: "Calle 1",
-        empresa_id: "1",
-        cargo: "DIRIGENTE",
-        especialidad: "DIRIGENTE",
-        fecha_ingreso_laboral: "2026-01-01",
-        fecha_afiliacion: "2026-01-01",
-        tipo_afiliacion: "SINDICAL",
-        estado: "ACTIVO",
-        observaciones: ""
-      });
-      setError("Nota: Mostrando carnet de prueba por error de red.");
+      setError("Error de conexión al buscar el afiliado.");
     } finally {
       setLoading(false);
     }
@@ -158,7 +114,15 @@ export default function CarnetsPage() {
                   <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                   Afiliado verificado correctamente.
                 </p>
-                <p className="text-blue-700">Puedes previsualizar el diseño a la derecha y emitir el carnet físico.</p>
+                {afiliado.estado_expediente === 'APROBADO' ? (
+                  <p className="text-blue-700">Puedes previsualizar el diseño a la derecha y emitir el carnet físico.</p>
+                ) : (
+                  <div className="bg-amber-100 text-amber-800 p-3 rounded-lg mt-2">
+                    <p className="font-bold">⚠️ Expediente NO aprobado</p>
+                    <p className="mb-2">Debes revisar y aprobar los documentos antes de emitir el carnet.</p>
+                    <a href={`/afiliados/${afiliado.ci}`} className="underline font-bold">Ir a Revisión de Expediente</a>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -200,8 +164,14 @@ export default function CarnetsPage() {
                   
                   {/* Foto Placeholder */}
                   <div className="w-20 h-24 mt-1 bg-slate-100 border-2 border-slate-200 rounded-lg flex items-center justify-center shrink-0 overflow-hidden relative">
-                    <div className="absolute bottom-0 w-full h-1/3 bg-slate-200 rounded-t-full opacity-50"></div>
-                    <div className="absolute top-4 w-10 h-10 bg-slate-200 rounded-full opacity-50"></div>
+                    {afiliado.fotografia && afiliado.fotografia.length > 10 ? (
+                      <img src={afiliado.fotografia} alt="Foto" className="w-full h-full object-cover" />
+                    ) : (
+                      <>
+                        <div className="absolute bottom-0 w-full h-1/3 bg-slate-200 rounded-t-full opacity-50"></div>
+                        <div className="absolute top-4 w-10 h-10 bg-slate-200 rounded-full opacity-50"></div>
+                      </>
+                    )}
                   </div>
                   
                   {/* Datos Afiliado */}
@@ -273,10 +243,14 @@ export default function CarnetsPage() {
 
               {/* Botones de Acción (No imprimibles) */}
               <div className="flex flex-col sm:flex-row gap-2 w-[340px] print:hidden">
-                <button onClick={() => setShowRenovar(true)} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 transition-all">
+                <button disabled={afiliado.estado_expediente !== 'APROBADO'} onClick={() => setShowRenovar(true)} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50">
                   Renovar Vigencia
                 </button>
-                <button onClick={handlePrint} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all">
+                <button disabled={afiliado.estado_expediente !== 'APROBADO'} onClick={async () => {
+                  if (afiliado.estado_expediente !== 'APROBADO') return;
+                  await api.actualizarVigencia(afiliado.ci, vigencia); // Usando API update as example
+                  handlePrint();
+                }} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                   <Printer size={18} />
                   Imprimir Carnet
                 </button>

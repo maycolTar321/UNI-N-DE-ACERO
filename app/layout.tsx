@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthProvider } from "@/lib/AuthContext";
+import { Suspense } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,11 +28,13 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full">
-        <AuthProvider>
-          <AppLayout>
-            {children}
-          </AppLayout>
-        </AuthProvider>
+        <Suspense fallback={<div>Cargando...</div>}>
+          <AuthProvider>
+            <AppLayout>
+              {children}
+            </AppLayout>
+          </AuthProvider>
+        </Suspense>
       </body>
     </html>
   );

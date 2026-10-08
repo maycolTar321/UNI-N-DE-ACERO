@@ -29,6 +29,8 @@ export default function DirectivaPage() {
     setEditingId(null);
   };
 
+  if (!isInitialized) return null;
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       
@@ -72,7 +74,8 @@ export default function DirectivaPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {cargos.map((cargo) => {
-          const IconComponent = cargo.icon;
+          const defaultCargo = INITIAL_CARGOS.find(c => c.id === cargo.id);
+          const IconComponent = defaultCargo?.icon || Crown;
           return (
             <div key={cargo.id} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow relative overflow-hidden group">
               {/* Top Accent Line */}
