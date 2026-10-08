@@ -17,9 +17,17 @@ export default function AfiliadosPage() {
   const { role } = useAuth();
 
   const handleDelete = async (afiliado: Afiliado) => {
-    if (confirm(`¿Estás seguro de eliminar al afiliado ${afiliado.nombres} ${afiliado.apellidos}?`)) {
-       setAfiliados(prev => prev.filter(a => a.id !== afiliado.id));
-       try { await api.eliminarAfiliado(String(afiliado.id)); } catch (e) {}
+    if (confirm(`¿Estás seguro de eliminar al afiliado ${afiliado.nombres} ${afiliado.apellidos}? Esta acción borrará el registro de la base de datos permanentemente.`)) {
+      try {
+        const res = await api.eliminarAfiliado(String(afiliado.id));
+        if (res.exito) {
+          setAfiliados(prev => prev.filter(a => a.id !== afiliado.id));
+        } else {
+          alert(`Error al eliminar: ${res.mensaje}`);
+        }
+      } catch (e) {
+        alert("Error de conexión al intentar eliminar. El registro no se eliminó.");
+      }
     }
   };
 

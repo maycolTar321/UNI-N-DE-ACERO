@@ -1,12 +1,14 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { Lock } from "lucide-react";
+import { Lock, Loader2 } from "lucide-react";
+import { api } from "./api";
 
 type Role = "ADMIN" | "USER" | null;
 
 interface AuthContextType {
   role: Role;
+  nombre: string;
   logout: () => void;
 }
 
@@ -14,33 +16,64 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>(null);
+  const [nombre, setNombre] = useState("");
   const [loading, setLoading] = useState(true);
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
+  const [verificando, setVerificando] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("auth_role") as Role;
-    if (saved) setRole(saved);
+    if (saved) {
+      setRole(saved);
+    }
+    const savedNombre = localStorage.getItem("auth_nombre");
+    if (savedNombre) {
+      setNombre(savedNombre);
+    }
     setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const entrar = (r: "ADMIN" | "USER", n: string) => {
+    setRole(r);
+    setNombre(n);
+    localStorage.setItem("auth_role", r);
+    localStorage.setItem("auth_nombre", n);
+  };
+
+  const fallar = () => {
+    setError(true);
+    setTimeout(() => setError(false), 2000);
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pin === "5230") {
-      setRole("ADMIN");
-      localStorage.setItem("auth_role", "ADMIN");
-    } else if (pin === "0000") {
-      setRole("USER");
-      localStorage.setItem("auth_role", "USER");
-    } else {
-      setError(true);
-      setTimeout(() => setError(false), 2000);
+    // PINs maestros (siempre funcionan, aunque no haya internet)
+    if (pin === "5230") return entrar("ADMIN", "Administrador");
+    if (pin === "0000") return entrar("USER", "Usuario");
+
+    // PINs creados desde Configuración > Roles y permisos
+    setVerificando(true);
+    try {
+      const res = await api.validarPin(pin);
+      if (res.exito && res.datos && (res.datos.rol === "ADMIN" || res.datos.rol === "USER")) {
+        entrar(res.datos.rol, res.datos.nombre);
+      } else {
+        fallar();
+      }
+    } catch {
+      fallar();
+    } finally {
+      setVerificando(false);
     }
   };
 
   const logout = () => {
     setRole(null);
+    setNombre("");
     localStorage.removeItem("auth_role");
+    localStorage.removeItem("auth_nombre");
     setPin("");
   };
 
@@ -71,8 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                />
                {error && <p className="text-red-500 text-xs text-center font-bold mt-2">PIN Incorrecto</p>}
              </div>
-             <button type="submit" className="w-full bg-[#10B981] hover:bg-[#059669] text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20">
-               Ingresar
+             <button type="submit" disabled={verificando} className="w-full bg-[#10B981] hover:bg-[#059669] text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-60 flex items-center justify-center gap-2">
+               {verificando ? <><Loader2 size={18} className="animate-spin" /> Verificando...</> : "Ingresar"}
              </button>
            </form>
         </div>
@@ -81,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ role, logout }}>
+    <AuthContext.Provider value={{ role, nombre, logout }}>
       {children}
     </AuthContext.Provider>
   );

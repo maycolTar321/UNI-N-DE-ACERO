@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 import { Crown, Medal, Briefcase, Landmark, ShieldAlert, Trophy, Flag, Mic, Edit2, X, Phone, MapPin, UserCircle2 } from "lucide-react";
+import { usePersistentState } from "@/lib/usePersistentState";
 const INITIAL_CARGOS = [
-  { id: 1, titulo: "1er ejecutivo", nombre: "Yamil Yañez", celular: "+591 ", domicilio: "", ocupado: true, icon: Crown },
+  { id: 1, titulo: "1er ejecutivo", nombre: "Yamil Yáñez", celular: "+591 ", domicilio: "", ocupado: true, icon: Crown },
   { id: 2, titulo: "2do ejecutivo", nombre: "Miguel Retamozo", celular: "+591 ", domicilio: "", ocupado: true, icon: Medal },
   { id: 3, titulo: "Strio Gral", nombre: "Alberto Barrios", celular: "+591 ", domicilio: "", ocupado: true, icon: Briefcase },
   { id: 4, titulo: "Strio de Hacienda", nombre: "Ruben Leon", celular: "+591 ", domicilio: "", ocupado: true, icon: Landmark },
@@ -14,7 +15,7 @@ const INITIAL_CARGOS = [
 ];
 
 export default function DirectivaPage() {
-  const [cargos, setCargos] = useState(INITIAL_CARGOS);
+  const [cargos, setCargos, isInitialized] = usePersistentState<any[]>("union_acero_directiva", INITIAL_CARGOS);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({ nombre: "", celular: "", domicilio: "" });
 

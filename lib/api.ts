@@ -128,5 +128,53 @@ export const api = {
       return { exito: false, mensaje: "Error de conexión." };
     }
   }
+  ,
+
+  // ===== USUARIOS DEL SISTEMA (ACCESOS) =====
+  listarUsuarios: async (): Promise<ApiResponse<UsuarioSistema[]>> => {
+    try {
+      const response = await fetch(`${API_URL}?accion=listarUsuarios`, { cache: 'no-store' });
+      return await response.json();
+    } catch (error: any) {
+      return { exito: false, mensaje: "Error de conexión." };
+    }
+  },
+
+  crearUsuario: async (nombre: string, pin: string, rol: string): Promise<ApiResponse> => {
+    try {
+      const params = new URLSearchParams({ accion: "crearUsuario", nombre, pin, rol });
+      const response = await fetch(`${API_URL}?${params.toString()}`, { cache: 'no-store' });
+      return await response.json();
+    } catch (error: any) {
+      return { exito: false, mensaje: "Error de conexión." };
+    }
+  },
+
+  eliminarUsuario: async (id: string): Promise<ApiResponse> => {
+    try {
+      const params = new URLSearchParams({ accion: "eliminarUsuario", id });
+      const response = await fetch(`${API_URL}?${params.toString()}`, { cache: 'no-store' });
+      return await response.json();
+    } catch (error: any) {
+      return { exito: false, mensaje: "Error de conexión." };
+    }
+  },
+
+  validarPin: async (pin: string): Promise<ApiResponse<{ nombre: string; rol: string }>> => {
+    try {
+      const params = new URLSearchParams({ accion: "validarPin", pin });
+      const response = await fetch(`${API_URL}?${params.toString()}`, { cache: 'no-store' });
+      return await response.json();
+    } catch (error: any) {
+      return { exito: false, mensaje: "Error de conexión." };
+    }
+  }
 };
+
+export interface UsuarioSistema {
+  id: string;
+  nombre: string;
+  rol: "ADMIN" | "USER";
+  fecha_creacion?: string;
+}
 

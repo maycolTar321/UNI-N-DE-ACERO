@@ -5,6 +5,8 @@ import { Search, Download, FileText, ArrowUpCircle, ArrowDownCircle, Plus, Walle
 import Image from "next/image";
 import { useAuth } from "@/lib/AuthContext";
 
+import { usePersistentState } from "@/lib/usePersistentState";
+
 type Movimiento = {
   id: string;
   fecha: string;
@@ -14,15 +16,8 @@ type Movimiento = {
   responsable: string;
 };
 
-// Datos de prueba temporales hasta conectar con Apps Script
-const mockData: Movimiento[] = [
-  { id: "1", fecha: "2026-10-01", concepto: "Aportes mensuales - Septiembre", tipo: "INGRESO", monto: 4500, responsable: "Admin" },
-  { id: "2", fecha: "2026-10-02", concepto: "Compra de material de oficina", tipo: "EGRESO", monto: 350, responsable: "Admin" },
-  { id: "3", fecha: "2026-10-05", concepto: "Alquiler de sede", tipo: "EGRESO", monto: 1200, responsable: "Admin" },
-];
-
 export default function CajaPage() {
-  const [movimientos, setMovimientos] = useState<Movimiento[]>(mockData);
+  const [movimientos, setMovimientos, isInitialized] = usePersistentState<Movimiento[]>("union_acero_caja", []);
   const [searchTerm, setSearchTerm] = useState("");
   const [isPrintMode, setIsPrintMode] = useState(false);
   const { role } = useAuth();
