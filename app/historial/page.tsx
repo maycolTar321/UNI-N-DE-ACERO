@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 import { Search, History, Filter } from "lucide-react";
 import { api } from "@/lib/api";
 
+
+const mockHistorial = [
+  { id: 1, fecha: new Date().toISOString(), usuario: 'Administrador', accion: 'LOGIN', descripcion: 'Inició sesión exitosamente', modulo: 'Auth' },
+  { id: 2, fecha: new Date(Date.now() - 3600000).toISOString(), usuario: 'Administrador', accion: 'EDITAR', descripcion: 'Editó datos de Yamil Yañez', modulo: 'Directiva' },
+  { id: 3, fecha: new Date(Date.now() - 7200000).toISOString(), usuario: 'Administrador', accion: 'CREAR', descripcion: 'Registró nuevo ingreso Bs. 4500', modulo: 'Caja' },
+  { id: 4, fecha: new Date(Date.now() - 86400000).toISOString(), usuario: 'Usuario Regular', accion: 'LOGIN', descripcion: 'Inició sesión para consulta', modulo: 'Auth' },
+];
+
 export default function HistorialPage() {
   const [historial, setHistorial] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,10 +20,10 @@ export default function HistorialPage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await api.getHistorial();
-        if (res.exito && Array.isArray(res.datos)) {
-          setHistorial(res.datos);
-        }
+        
+        // Mock data for now since Apps script doesn't have an audit table
+        setHistorial(mockHistorial);
+
       } catch (err) {
         console.error(err);
       } finally {
