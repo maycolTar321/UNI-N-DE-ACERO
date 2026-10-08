@@ -241,7 +241,7 @@ export default function AfiliadosPage() {
                       </td>
                       <td className="py-3 px-4 text-right">
                         {role === 'ADMIN' && (
-                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                          <div className="flex justify-end gap-2  transition-all">
                             <button onClick={() => { setSelectedAfiliado(afiliado); setEditModalOpen(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Editar">
                               <Edit2 size={18} />
                             </button>

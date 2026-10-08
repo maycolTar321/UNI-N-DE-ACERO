@@ -313,11 +313,11 @@ export default function CajaPage() {
                   </td>
                   {role === 'ADMIN' && (
                     <td className="py-3 px-4 text-right print:hidden">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                        <button onClick={() => handleOpenModal(m)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md">
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => handleOpenModal(m)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Editar">
                           <Edit2 size={18} />
                         </button>
-                        <button onClick={() => handleDelete(m.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md">
+                        <button onClick={() => handleDelete(m.id)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Eliminar">
                           <Trash2 size={18} />
                         </button>
                       </div>
