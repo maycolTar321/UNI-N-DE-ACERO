@@ -84,7 +84,7 @@ export default function DirectivaPage() {
                   </div>
                   <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">{cargo.titulo}</h3>
                 </div>
-                <button onClick={() => openEdit(cargo)} className="p-1.5 text-slate-400 hover:text-[#10B981] hover:bg-emerald-50 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                <button onClick={() => openEdit(cargo)} className="p-1.5 text-slate-400 hover:text-[#10B981] hover:bg-emerald-50 rounded-lg transition-colors ">
                   <Edit2 size={16} />
                 </button>
               </div>
