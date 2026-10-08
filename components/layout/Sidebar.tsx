@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/AuthContext";
 import Image from "next/image";
 import { 
   LayoutDashboard, 
@@ -12,7 +13,8 @@ import {
   UsersRound, 
   Settings, 
   GraduationCap,
-  X
+  X,
+  Wallet
 } from "lucide-react";
 
 interface SidebarProps {
@@ -22,6 +24,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   type NavItem = { id: string; label: string; icon: any; disabled?: boolean; };
   type NavGroup = { section: string; items: NavItem[]; };
@@ -41,6 +44,12 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       items: [
         { id: "/historial", label: "Historial", icon: History },
         { id: "/directiva", label: "Directiva", icon: UsersRound },
+      ],
+    },
+    {
+      section: "FINANZAS",
+      items: [
+        { id: "/caja", label: "Caja", icon: Wallet },
       ],
     },
     {
@@ -129,7 +138,11 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-white/5">
+        <div className="p-6 border-t border-white/5 space-y-4">
+          <button onClick={logout} className="w-full flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white rounded-xl p-3 border border-white/10 transition-colors">
+             <span className="text-xs font-bold">Cerrar Sesión</span>
+          </button>
+          
           <div className="flex items-center gap-3 bg-white/5 rounded-xl p-3 border border-white/10">
             <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)] animate-pulse" />
             <div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Search, Filter, MoreVertical, ShieldCheck, Clock, XCircle, Users, Edit2, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/AuthContext";
 import { Afiliado } from "@/lib/types";
 
 export default function AfiliadosPage() {
@@ -13,11 +14,12 @@ export default function AfiliadosPage() {
   const [statusFilter, setStatusFilter] = useState("TODOS");
   const [selectedAfiliado, setSelectedAfiliado] = useState<Afiliado | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const { role } = useAuth();
 
   const handleDelete = async (afiliado: Afiliado) => {
     if (confirm(`¿Estás seguro de eliminar al afiliado ${afiliado.nombres} ${afiliado.apellidos}?`)) {
        setAfiliados(prev => prev.filter(a => a.id !== afiliado.id));
-       try { await api.eliminarAfiliado(afiliado.id); } catch (e) {}
+       try { await api.eliminarAfiliado(String(afiliado.id)); } catch (e) {}
     }
   };
 
@@ -26,7 +28,7 @@ export default function AfiliadosPage() {
     if (!selectedAfiliado) return;
     setAfiliados(prev => prev.map(a => a.id === selectedAfiliado.id ? selectedAfiliado : a));
     setEditModalOpen(false);
-    try { await api.actualizarAfiliado(selectedAfiliado.id, selectedAfiliado); } catch(e) {}
+    try { await api.actualizarAfiliado(String(selectedAfiliado.id), selectedAfiliado); } catch(e) {}
   };
 
   useEffect(() => {
@@ -116,7 +118,7 @@ export default function AfiliadosPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Estado</label>
-                    <select value={selectedAfiliado.estado || 'PENDIENTE'} onChange={e => setSelectedAfiliado({...selectedAfiliado, estado: e.target.value})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm">
+                    <select value={selectedAfiliado.estado || 'PENDIENTE'} onChange={e => setSelectedAfiliado({...selectedAfiliado, estado: e.target.value as "ACTIVO" | "PENDIENTE" | "RECHAZADO"})} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm">
                        <option value="ACTIVO">Activo</option>
                        <option value="PENDIENTE">Pendiente</option>
                        <option value="RECHAZADO">Rechazado</option>
@@ -238,14 +240,16 @@ export default function AfiliadosPage() {
                         {getStatusBadge(afiliado.estado)}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                          <button onClick={() => { setSelectedAfiliado(afiliado); setEditModalOpen(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Editar">
-                            <Edit2 size={18} />
-                          </button>
-                          <button onClick={() => handleDelete(afiliado)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Eliminar">
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
+                        {role === 'ADMIN' && (
+                          <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                            <button onClick={() => { setSelectedAfiliado(afiliado); setEditModalOpen(true); }} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md" title="Editar">
+                              <Edit2 size={18} />
+                            </button>
+                            <button onClick={() => handleDelete(afiliado)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Eliminar">
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -261,14 +265,16 @@ export default function AfiliadosPage() {
                         <div className="font-bold text-slate-800">{afiliado.nombres} {afiliado.apellidos}</div>
                         <div className="text-xs text-slate-500 mt-0.5">{afiliado.cargo} • {afiliado.empresa_id || "Sin empresa"}</div>
                       </div>
-                      <div className="flex gap-1">
-                        <button onClick={() => { setSelectedAfiliado(afiliado); setEditModalOpen(true); }} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md">
-                          <Edit2 size={16} />
-                        </button>
-                        <button onClick={() => handleDelete(afiliado)} className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-md">
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
+                      {role === 'ADMIN' && (
+                        <div className="flex gap-1">
+                          <button onClick={() => { setSelectedAfiliado(afiliado); setEditModalOpen(true); }} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md">
+                            <Edit2 size={16} />
+                          </button>
+                          <button onClick={() => handleDelete(afiliado)} className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-md">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div className="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
                       <div className="flex flex-col">
