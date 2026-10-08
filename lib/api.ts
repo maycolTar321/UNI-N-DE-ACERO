@@ -1,8 +1,28 @@
 import { Afiliado, ApiResponse, DashboardStats, Empresa } from "./types";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyaXiTMFXUxRbbQ19H7SdCeB0MQaiKSK9uBL1KaCEHDeExrxPB6NjAYkdYTsVD3TmuMwQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyGDnWz_znUwnCmpUtDDczRIIgjdSGonDnBFOpaZ2iqtSrPHAnbUR96Vc9Izkfs0wM-Xg/exec";
 
 export const api = {
+  actualizarVigencia: async (ciOId: string, nuevaVigencia: string): Promise<ApiResponse> => {
+    try {
+      await fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        },
+        body: JSON.stringify({
+          accion: "renovarVigencia",
+          id: ciOId,
+          vigencia: nuevaVigencia,
+        }),
+      });
+      return { exito: true, mensaje: "Vigencia renovada exitosamente" };
+    } catch (e: any) {
+      console.error("Error renovando vigencia:", e);
+      return { exito: false, mensaje: "Error al conectar con el servidor" };
+    }
+  },
   getAfiliados: async (): Promise<ApiResponse<Afiliado[]>> => {
     try {
       const response = await fetch(`${API_URL}?accion=listarAfiliados`, { cache: 'no-store' });
