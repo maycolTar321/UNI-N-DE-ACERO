@@ -133,29 +133,56 @@ export default function NuevoAfiliadoPage() {
     );
   }
 
-  const renderDocToggle = (key: keyof typeof docs, label: string) => (
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-slate-50 rounded-xl border border-slate-200 gap-4">
-      <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${docs[key] === 'PRESENTADO' ? 'bg-emerald-100 text-emerald-600' : docs[key] === 'OMITIDO' ? 'bg-amber-100 text-amber-600' : 'bg-slate-200 text-slate-500'}`}>
-          <FileText size={20} />
-        </div>
-        <div>
-          <div className="font-bold text-slate-800 text-sm">{label}</div>
-          <div className="text-xs text-slate-500">
-            {docs[key] === 'PRESENTADO' ? 'Documento adjunto' : docs[key] === 'OMITIDO' ? 'Omitido temporalmente' : 'Requisito obligatorio'}
+  const renderDocToggle = (key: keyof typeof docs, label: string) => {
+    const estado = docs[key];
+    return (
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-slate-50 rounded-xl border border-slate-200 gap-4">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${estado === 'PRESENTADO' ? 'bg-emerald-100 text-emerald-600' : estado === 'OMITIDO' ? 'bg-amber-100 text-amber-600' : 'bg-slate-200 text-slate-500'}`}>
+            <FileText size={20} />
+          </div>
+          <div>
+            <div className="font-bold text-slate-800 text-sm">{label}</div>
+            <div className={`text-xs font-bold ${estado === 'PRESENTADO' ? 'text-emerald-600' : estado === 'OMITIDO' ? 'text-amber-600' : 'text-slate-500'}`}>
+              {estado === 'PRESENTADO' ? 'Documento adjunto' : estado === 'OMITIDO' ? 'Omitido temporalmente' : 'Requisito obligatorio (Pendiente)'}
+            </div>
           </div>
         </div>
+        <div className="flex gap-2 w-full sm:w-auto">
+          {estado === 'PENDIENTE' && (
+            <>
+              <button type="button" onClick={() => setDocs(p => ({...p, [key]: 'PRESENTADO'}))} className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-600 border border-slate-300 hover:bg-slate-50">
+                Presentado
+              </button>
+              <button type="button" onClick={() => setDocs(p => ({...p, [key]: 'OMITIDO'}))} className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-600 border border-slate-300 hover:bg-slate-50">
+                Omitir
+              </button>
+            </>
+          )}
+          {estado === 'OMITIDO' && (
+            <>
+              <button type="button" onClick={() => setDocs(p => ({...p, [key]: 'PRESENTADO'}))} className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 border border-emerald-600">
+                Presentar Documento
+              </button>
+              <button type="button" onClick={() => setDocs(p => ({...p, [key]: 'PENDIENTE'}))} className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-600 border border-slate-300 hover:bg-slate-50">
+                Deshacer Omisión
+              </button>
+            </>
+          )}
+          {estado === 'PRESENTADO' && (
+            <>
+              <button type="button" className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed">
+                Ver Documento
+              </button>
+              <button type="button" onClick={() => setDocs(p => ({...p, [key]: 'PENDIENTE'}))} className="flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-600 border border-slate-300 hover:bg-slate-50">
+                Reemplazar
+              </button>
+            </>
+          )}
+        </div>
       </div>
-      <div className="flex gap-2 w-full sm:w-auto">
-        <button type="button" onClick={() => setDocs(p => ({...p, [key]: 'PRESENTADO'}))} className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${docs[key] === 'PRESENTADO' ? 'bg-emerald-500 text-white border-emerald-600' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}>
-          Presentado
-        </button>
-        <button type="button" onClick={() => setDocs(p => ({...p, [key]: 'OMITIDO'}))} className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${docs[key] === 'OMITIDO' ? 'bg-amber-500 text-white border-amber-600' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'}`}>
-          Omitir
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-12">
@@ -296,6 +323,23 @@ export default function NuevoAfiliadoPage() {
           <h2 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-6 pb-4 border-b border-slate-100 flex items-center gap-2">
             <Clock size={16} /> Expediente y Requisitos
           </h2>
+          
+          <div className="mb-6 space-y-2">
+            <div className="flex justify-between text-sm font-bold">
+              <span className="text-slate-600">Progreso del Expediente</span>
+              <span className="text-emerald-600">
+                {Object.values(docs).filter(v => v === 'PRESENTADO').length + (fotografia ? 1 : 0)} / 5 requisitos completos
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+              <div 
+                className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                style={{ width: `${((Object.values(docs).filter(v => v === 'PRESENTADO').length + (fotografia ? 1 : 0)) / 5) * 100}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-slate-500">Los requisitos omitidos temporalmente NO suman al progreso.</p>
+          </div>
+          
           <p className="text-sm text-slate-600 mb-6">Selecciona los documentos que estás adjuntando físicamente o digitalmente ahora mismo. Si falta alguno, puedes "Omitir" y el expediente quedará PENDIENTE.</p>
           
           <div className="space-y-3">
