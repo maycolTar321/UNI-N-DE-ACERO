@@ -4,39 +4,43 @@ import { useEffect, useState } from "react";
 import { Plus, Search, Building2, MoreVertical } from "lucide-react";
 import { api } from "@/lib/api";
 import { Empresa } from "@/lib/types";
+import { useSharedData } from "@/lib/useSharedData";
 
 export default function EmpresasPage() {
-  const [empresas, setEmpresas] = useState<Empresa[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: response, loading, error, mutate } = useSharedData("empresas", async () => await api.getEmpresas());
+  const empresas = response?.exito ? (response.datos as Empresa[]) : [];
   const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await api.getEmpresas();
-        if (res.exito && Array.isArray(res.datos)) {
-          setEmpresas(res.datos);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
-
+  
   const filteredEmpresas = (Array.isArray(empresas) ? empresas : []).filter(e => 
     (e?.nombre || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newEmpresa, setNewEmpresa] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSaveEmpresa = () => {
+  const handleSaveEmpresa = async () => {
+    if (!newEmpresa.trim()) return;
+    setIsSaving(true);
+    const original = response;
+    const empresaMock = { id: `temp-${Date.now()}`, nombre: newEmpresa, cantidad_afiliados: 0 };
+    if (original) mutate({ ...original, datos: [...empresas, empresaMock] });
+    
     setIsModalOpen(false);
-    alert(`Empresa "${newEmpresa}" registrada exitosamente.`);
-    setNewEmpresa("");
+    
+    try {
+      const res = await api.registrarEmpresa(empresaMock);
+      if (!res.exito) {
+        alert("Error al registrar: " + res.mensaje);
+        if (original) mutate(original);
+      }
+    } catch (e) {
+      alert("Error de conexión");
+      if (original) mutate(original);
+    } finally {
+      setIsSaving(false);
+      setNewEmpresa("");
+    }
   };
 
   return (
@@ -113,39 +117,64 @@ export default function EmpresasPage() {
               </p>
             </div>
           ) : (
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="text-left py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Empresa</th>
-                  <th className="text-left py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Afiliados</th>
-                  <th className="text-right py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
+            <>
+              {/* Desktop Table */}
+              <table className="w-full hidden md:table">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="text-left py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Empresa</th>
+                    <th className="text-left py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Afiliados</th>
+                    <th className="text-right py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredEmpresas.map((empresa, idx) => (
+                    <tr key={empresa.id || idx} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold">
+                            {(empresa.nombre || "E").charAt(0).toUpperCase()}
+                          </div>
+                          <span className="font-bold text-slate-800">{empresa.nombre}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="text-sm font-medium text-slate-600">
+                          {empresa.cantidad_afiliados || 0} registrados
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-all">
+                          <MoreVertical size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden flex flex-col divide-y divide-slate-100">
                 {filteredEmpresas.map((empresa, idx) => (
-                  <tr key={empresa.id || idx} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="py-4 px-4">
+                  <div key={empresa.id || idx} className="p-4 flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold shrink-0">
                           {(empresa.nombre || "E").charAt(0).toUpperCase()}
                         </div>
-                        <span className="font-bold text-slate-800">{empresa.nombre}</span>
+                        <div>
+                          <div className="font-bold text-slate-800">{empresa.nombre}</div>
+                          <div className="text-xs text-slate-500">{empresa.cantidad_afiliados || 0} registrados</div>
+                        </div>
                       </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className="text-sm font-medium text-slate-600">
-                        {empresa.cantidad_afiliados || 0} registrados
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-right">
-                      <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-all">
+                      <button className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-all">
                         <MoreVertical size={18} />
                       </button>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </>
           )}
         </div>
       </div>

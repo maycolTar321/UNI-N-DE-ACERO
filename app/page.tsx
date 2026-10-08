@@ -1,62 +1,61 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Users, CheckCircle2, Clock, Building2, TrendingUp, AlertCircle, Plus, ArrowRight } from "lucide-react";
+import { Users, CheckCircle2, Clock, Building2, TrendingUp, AlertCircle, Plus, ArrowRight, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
-import { DashboardStats } from "@/lib/types";
 import Link from "next/link";
+import { useSharedData } from "@/lib/useSharedData";
+import { Afiliado, Empresa } from "@/lib/types";
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: afiliadosResponse, loading: loadingAfiliados, error: errorAfiliados } = useSharedData(
+    "afiliados",
+    async () => await api.getAfiliados()
+  );
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const response = await api.getDashboard();
-        if (response.exito && response.datos) {
-          setStats(response.datos);
-        } else {
-          // Si no hay datos, mostrar vacíos para no inventar
-          setStats({ total: 0, activos: 0, pendientes: 0, rechazados: 0, empresas: 0 });
-        }
-      } catch (error) {
-        setStats({ total: 0, activos: 0, pendientes: 0, rechazados: 0, empresas: 0 });
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const { data: empresasResponse, loading: loadingEmpresas } = useSharedData(
+    "empresas",
+    async () => await api.getEmpresas()
+  );
+
+  const afiliados = Array.isArray(afiliadosResponse?.datos) ? (afiliadosResponse!.datos as Afiliado[]) : [];
+  const empresas = Array.isArray(empresasResponse?.datos) ? (empresasResponse!.datos as Empresa[]) : [];
+  const loading = loadingAfiliados || loadingEmpresas;
+  const error = errorAfiliados || (!afiliadosResponse?.exito && !loadingAfiliados ? afiliadosResponse?.mensaje : null);
+
+  const totalAfiliados = afiliados?.length || 0;
+  const activos = afiliados?.filter(a => a.estado === 'ACTIVO').length || 0;
+  const pendientes = afiliados?.filter(a => a.estado === 'PENDIENTE').length || 0;
+  const rechazados = afiliados?.filter(a => a.estado === 'RECHAZADO').length || 0;
+  const totalEmpresas = empresas?.length || 0;
 
   const statCards = [
     {
       title: "Total Afiliados",
-      value: stats?.total ?? 0,
+      value: totalAfiliados,
       icon: Users,
       color: "bg-blue-50 text-blue-600",
       borderColor: "border-blue-100",
     },
     {
       title: "Afiliados Activos",
-      value: stats?.activos ?? 0,
+      value: activos,
       icon: CheckCircle2,
       color: "bg-emerald-50 text-emerald-600",
       borderColor: "border-emerald-100",
     },
     {
       title: "Pendientes",
-      value: stats?.pendientes ?? 0,
+      value: pendientes,
       icon: Clock,
       color: "bg-amber-50 text-amber-600",
       borderColor: "border-amber-100",
     },
     {
-      title: "Rechazados",
-      value: stats?.rechazados ?? 0,
-      icon: AlertCircle,
-      color: "bg-emerald-50 text-red-600",
-      borderColor: "border-emerald-100",
+      title: "Empresas",
+      value: totalEmpresas,
+      icon: Building2,
+      color: "bg-indigo-50 text-indigo-600",
+      borderColor: "border-indigo-100",
     },
   ];
 
@@ -89,26 +88,35 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((stat, i) => (
-          <div key={i} className={`bg-white p-6 rounded-2xl border ${stat.borderColor} shadow-sm flex flex-col gap-4 relative overflow-hidden group`}>
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color} transition-transform group-hover:scale-110`}>
-              <stat.icon size={24} strokeWidth={2.5} />
+      {error ? (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-700 font-bold flex flex-col items-center">
+          <AlertCircle size={32} className="mb-2" />
+          <p>Error al cargar los datos</p>
+          <p className="text-sm font-normal mt-1">{error}</p>
+          <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold shadow hover:bg-red-700">Reintentar</button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {statCards.map((stat, i) => (
+            <div key={i} className={`bg-white p-6 rounded-2xl border ${stat.borderColor} shadow-sm flex flex-col gap-4 relative overflow-hidden group`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color} transition-transform group-hover:scale-110`}>
+                <stat.icon size={24} strokeWidth={2.5} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-500">{stat.title}</p>
+                {loading ? (
+                  <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mt-1"></div>
+                ) : (
+                  <h3 className="text-3xl font-black text-slate-800 mt-1">{stat.value}</h3>
+                )}
+              </div>
+              <div className="absolute -bottom-4 -right-4 opacity-5 pointer-events-none transition-transform group-hover:scale-110">
+                <stat.icon size={100} />
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-slate-500">{stat.title}</p>
-              {loading ? (
-                <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mt-1"></div>
-              ) : (
-                <h3 className="text-3xl font-black text-slate-800 mt-1">{stat.value}</h3>
-              )}
-            </div>
-            <div className="absolute -bottom-4 -right-4 opacity-5 pointer-events-none transition-transform group-hover:scale-110">
-              <stat.icon size={100} />
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
@@ -123,11 +131,15 @@ export default function Dashboard() {
           </div>
           
           <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
-              <Clock className="text-slate-400" size={32} />
-            </div>
-            <h3 className="text-slate-800 font-bold">Sin datos registrados</h3>
-            <p className="text-slate-500 text-sm mt-1">La actividad reciente aparecerá aquí</p>
+            {loading ? (
+              <Loader2 className="animate-spin text-slate-400 mb-3" size={32} />
+            ) : (
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                <Clock className="text-slate-400" size={32} />
+              </div>
+            )}
+            <h3 className="text-slate-800 font-bold">{loading ? "Cargando..." : "Sin datos registrados"}</h3>
+            <p className="text-slate-500 text-sm mt-1">{loading ? "Obteniendo información reciente" : "La actividad reciente aparecerá aquí"}</p>
           </div>
         </div>
 
@@ -143,14 +155,19 @@ export default function Dashboard() {
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
-            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
-              <Building2 className="text-slate-400" size={32} />
-            </div>
-            <h3 className="text-slate-800 font-bold">Sin datos registrados</h3>
-            <p className="text-slate-500 text-sm mt-1">Registra afiliados para ver distribución</p>
+            {loading ? (
+              <Loader2 className="animate-spin text-slate-400 mb-3" size={32} />
+            ) : (
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                <Building2 className="text-slate-400" size={32} />
+              </div>
+            )}
+            <h3 className="text-slate-800 font-bold">{loading ? "Cargando..." : ((empresas?.length || 0) > 0 ? `${empresas.length} Empresas` : "Sin datos registrados")}</h3>
+            <p className="text-slate-500 text-sm mt-1">{loading ? "Consultando distribución" : ((empresas?.length || 0) > 0 ? "Empresas con convenios activos" : "Registra empresas para ver distribución")}</p>
           </div>
         </div>
       </div>
     </div>
   );
 }
+

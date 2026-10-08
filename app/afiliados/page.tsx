@@ -6,10 +6,12 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/AuthContext";
 import { Afiliado } from "@/lib/types";
+import { useSharedData } from "@/lib/useSharedData";
 
 export default function AfiliadosPage() {
-  const [afiliados, setAfiliados] = useState<Afiliado[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: response, loading, error, mutate } = useSharedData("afiliados", async () => await api.getAfiliados());
+  const afiliados = response?.exito ? (response.datos as Afiliado[]) : [];
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("TODOS");
   const [selectedAfiliado, setSelectedAfiliado] = useState<Afiliado | null>(null);
@@ -18,15 +20,18 @@ export default function AfiliadosPage() {
 
   const handleDelete = async (afiliado: Afiliado) => {
     if (confirm(`¿Estás seguro de eliminar al afiliado ${afiliado.nombres} ${afiliado.apellidos}? Esta acción borrará el registro de la base de datos permanentemente.`)) {
+      const original = response;
+      if (original) mutate({ ...original, datos: afiliados.filter(a => a.id !== afiliado.id) });
+      
       try {
         const res = await api.eliminarAfiliado(String(afiliado.id));
-        if (res.exito) {
-          setAfiliados(prev => prev.filter(a => a.id !== afiliado.id));
-        } else {
+        if (!res.exito) {
           alert(`Error al eliminar: ${res.mensaje}`);
+          if (original) mutate(original);
         }
       } catch (e) {
         alert("Error de conexión al intentar eliminar. El registro no se eliminó.");
+        if (original) mutate(original);
       }
     }
   };
@@ -34,29 +39,21 @@ export default function AfiliadosPage() {
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAfiliado) return;
-    setAfiliados(prev => prev.map(a => a.id === selectedAfiliado.id ? selectedAfiliado : a));
+    const original = response;
+    if (original) mutate({ ...original, datos: afiliados.map(a => a.id === selectedAfiliado.id ? selectedAfiliado : a) });
     setEditModalOpen(false);
-    try { await api.actualizarAfiliado(String(selectedAfiliado.id), selectedAfiliado); } catch(e) {}
-  };
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await api.getAfiliados();
-        if (res.exito && Array.isArray(res.datos)) {
-          setAfiliados(res.datos);
-        } else {
-          setAfiliados([]);
-        }
-      } catch (err) {
-        console.error(err);
-        setAfiliados([]);
-      } finally {
-        setLoading(false);
+    
+    try { 
+      const res = await api.actualizarAfiliado(String(selectedAfiliado.id), selectedAfiliado); 
+      if (!res.exito) {
+        alert(`Error al guardar: ${res.mensaje}`);
+        if (original) mutate(original);
       }
+    } catch(e) {
+      alert("Error de conexión. Se revirtieron los cambios.");
+      if (original) mutate(original);
     }
-    load();
-  }, []);
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {

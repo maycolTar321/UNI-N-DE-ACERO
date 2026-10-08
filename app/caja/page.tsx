@@ -280,7 +280,8 @@ export default function CajaPage() {
 
         {/* VISTA DE PANTALLA (NO IMPRESIÓN) */}
         <div className="overflow-x-auto print:hidden">
-          <table className="w-full">
+          {/* Desktop Table View */}
+          <table className="w-full hidden md:table">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
                 <th className="text-left py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Fecha</th>
@@ -322,13 +323,54 @@ export default function CajaPage() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-8 text-center text-slate-500 text-sm">
+                  <td colSpan={5} className="py-8 text-center text-slate-500 text-sm">
                     No se encontraron movimientos.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden flex flex-col divide-y divide-slate-100">
+            {filtered.map((m) => (
+              <div key={m.id} className="p-4 flex flex-col gap-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-bold text-slate-800 text-sm">{m.concepto}</div>
+                    <div className="text-xs text-slate-500 mt-1">{m.fecha}</div>
+                  </div>
+                  <div className={`text-right text-sm font-black ${m.tipo === 'INGRESO' ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {m.tipo === 'INGRESO' ? '+' : '-'} Bs. {m.monto.toLocaleString()}
+                  </div>
+                </div>
+                <div className="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                  <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-bold ${
+                    m.tipo === 'INGRESO' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    {m.tipo === 'INGRESO' ? <ArrowUpCircle size={14} /> : <ArrowDownCircle size={14} />}
+                    {m.tipo}
+                  </span>
+                  
+                  {role === 'ADMIN' && (
+                    <div className="flex gap-1">
+                      <button onClick={() => handleOpenModal(m)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
+                        <Edit2 size={16} />
+                      </button>
+                      <button onClick={() => handleDelete(m.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {filtered.length === 0 && (
+              <div className="py-8 text-center text-slate-500 text-sm">
+                No se encontraron movimientos.
+              </div>
+            )}
+          </div>
         </div>
 
         {/* VISTA DE IMPRESIÓN (PDF ESTILO PROFIT & LOSS) */}
