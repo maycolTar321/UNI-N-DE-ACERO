@@ -47,3 +47,19 @@ y normalizarlo al guardar. Después de desplegar, probar con un afiliado de prue
 Esta corrección presupone que el endpoint de Google Apps Script conserva y devuelve el campo
 `observaciones` en las acciones `registrarAfiliado`, `actualizarAfiliado`, `listarAfiliados`
 y `obtenerAfiliado`. Si el script no persiste esa columna, hay que actualizar también el backend.
+
+
+## Endpoint de Google Apps Script actualizado
+
+El frontend `lib/api.ts` apunta ahora a:
+
+`https://script.google.com/macros/s/AKfycbwBj1OA33lgCUepU59iakSZR1IjNO9WSlcp90QgZDktV9L-EoaPczp-fo-Lqsgu0qlpAw/exec`
+
+Los campos `estado_afiliacion`, `estado_operativo`, `estado_expediente` y `estado_carnet`
+se envían directamente como propiedades para que el backend los persista en columnas con esos
+encabezados. La API debe tener una implementación publicada que soporte `listarAfiliados`,
+`registrarAfiliado`, `actualizarAfiliado`, `eliminarAfiliado`, `obtenerAfiliado` y `renovarVigencia`.
+
+**Importante:** el script compartido hasta ahora no implementa las acciones de empresas,
+dashboard, historial y usuarios que también usa este frontend. Esos módulos requieren conservar
+sus acciones en el backend o ampliarlo antes de considerar la aplicación completamente conectada.

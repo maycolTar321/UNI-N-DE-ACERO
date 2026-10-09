@@ -1,6 +1,6 @@
 import { Afiliado, ApiResponse, DashboardStats, Empresa } from "./types";
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyGDnWz_znUwnCmpUtDDczRIIgjdSGonDnBFOpaZ2iqtSrPHAnbUR96Vc9Izkfs0wM-Xg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwBj1OA33lgCUepU59iakSZR1IjNO9WSlcp90QgZDktV9L-EoaPczp-fo-Lqsgu0qlpAw/exec";
 
 /**
  * Los estados extendidos se guardan en observaciones para evitar que el backend
@@ -82,7 +82,9 @@ export const api = {
           datos: baseData,
         }),
       });
-      return { exito: true, mensaje: "Enviado a Apps Script correctamente" };
+      // En modo no-cors no es posible leer la respuesta HTTP. La lista debe refrescarse
+      // después del guardado para confirmar el estado persistido.
+      return { exito: true, mensaje: "Solicitud enviada. Actualiza la lista para verificar el guardado." };
     } catch (error: any) {
       console.error("Error registrando afiliado:", error);
       return { exito: false, mensaje: "No pudimos conectar con el servidor. Verifica tu conexión e inténtalo nuevamente.", error: error.message };
@@ -105,16 +107,14 @@ export const api = {
 
   actualizarAfiliado: async (id: string, datos: Partial<Afiliado>): Promise<ApiResponse> => {
     try {
-      const { estado_afiliacion, estado_operativo, estado_expediente, estado_carnet, documentos, coordenadas_domicilio, coordenadas_empresa, ...baseData } = datos as any;
-      const extraData = { estado_afiliacion, estado_operativo, estado_expediente, estado_carnet, documentos, coordenadas_domicilio, coordenadas_empresa };
-      baseData.observaciones = (baseData.observaciones || '').replace(/\|_JSON_\|.*/, '') + '|_JSON_|' + JSON.stringify(extraData);
-      if (typeof baseData.estado === "string") baseData.estado = baseData.estado.replace(/\|_JSON_\|.*/, "");
+      // Enviar todos los campos modificados, incluidos los estados, directamente al backend.
+      const datosActualizacion = { ...(datos as any) };
 
       await fetch(API_URL, {
         method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ accion: "actualizarAfiliado", id, datos: baseData }),
+        body: JSON.stringify({ accion: "actualizarAfiliado", id, datos: datosActualizacion }),
       });
-      return { exito: true };
+      return { exito: true, mensaje: "Solicitud de actualización enviada. Recarga los datos para comprobar el resultado." };
     } catch (error: any) { return { exito: false, mensaje: "Error de conexión." }; }
   },
 
