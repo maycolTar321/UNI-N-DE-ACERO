@@ -1,175 +1,181 @@
 "use client";
 
-import { Users, CheckCircle2, Clock, Building2, TrendingUp, AlertCircle, Plus, ArrowRight, Loader2, FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, Search, Building2, MoreVertical } from "lucide-react";
 import { api } from "@/lib/api";
-import Link from "next/link";
+import { Empresa } from "@/lib/types";
 import { useSharedData } from "@/lib/useSharedData";
-import { Afiliado, Empresa } from "@/lib/types";
 
-export default function Dashboard() {
-  const { data: afiliadosResponse, loading: loadingAfiliados, error: errorAfiliados } = useSharedData(
-    "afiliados",
-    async () => await api.getAfiliados()
+export default function EmpresasPage() {
+  const { data: response, loading, error, mutate } = useSharedData("empresas", async () => await api.getEmpresas());
+  const empresas = response?.exito ? (response.datos as Empresa[]) : [];
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  const filteredEmpresas = (Array.isArray(empresas) ? empresas : []).filter(e => 
+    (e?.nombre || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const { data: empresasResponse, loading: loadingEmpresas } = useSharedData(
-    "empresas",
-    async () => await api.getEmpresas()
-  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newEmpresa, setNewEmpresa] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
-  const afiliados = Array.isArray(afiliadosResponse?.datos) ? (afiliadosResponse!.datos as Afiliado[]) : [];
-  const empresas = Array.isArray(empresasResponse?.datos) ? (empresasResponse!.datos as Empresa[]) : [];
-  const loading = loadingAfiliados || loadingEmpresas;
-  const error = errorAfiliados || (!afiliadosResponse?.exito && !loadingAfiliados ? afiliadosResponse?.mensaje : null);
-
-  const totalAfiliados = afiliados?.length || 0;
-  const activos = afiliados?.filter(a => a.estado_operativo === 'ACTIVO').length || 0;
-  const pendientes = afiliados?.filter(a => a.estado_afiliacion === 'PENDIENTE' || a.estado_afiliacion === 'EN_REVISION').length || 0;
-  const rechazados = afiliados?.filter(a => a.estado_afiliacion === 'RECHAZADO').length || 0;
-  const totalEmpresas = empresas?.length || 0;
-
-  // Nuevas métricas de Expediente y Carnet
-  const expedientesCompletos = afiliados?.filter(a => ['COMPLETO', 'EN_REVISION', 'APROBADO'].includes(a.estado_expediente || "")).length || 0;
-  const expedientesRevision = afiliados?.filter(a => a.estado_expediente === 'EN_REVISION').length || 0;
-  const carnetsEmitidos = afiliados?.filter(a => a.estado_carnet === 'EMITIDO').length || 0;
-
-  const statCards = [
-    {
-      title: "Total Afiliados",
-      value: totalAfiliados,
-      icon: Users,
-      color: "bg-blue-50 text-blue-600",
-      borderColor: "border-blue-100",
-    },
-    {
-      title: "Afiliados Activos",
-      value: activos,
-      icon: CheckCircle2,
-      color: "bg-emerald-50 text-emerald-600",
-      borderColor: "border-emerald-100",
-    },
-    {
-      title: "Expedientes Pend.",
-      value: pendientes,
-      icon: Clock,
-      color: "bg-amber-50 text-amber-600",
-      borderColor: "border-amber-100",
-    },
-    {
-      title: "Carnets Emitidos",
-      value: carnetsEmitidos,
-      icon: FileText,
-      color: "bg-indigo-50 text-indigo-600",
-      borderColor: "border-indigo-100",
-    },
-  ];
+  const handleSaveEmpresa = async () => {
+    if (!newEmpresa.trim()) return;
+    setIsSaving(true);
+    const original = response;
+    const empresaMock = { id: `temp-${Date.now()}`, nombre: newEmpresa, cantidad_afiliados: 0 };
+    if (original) mutate({ ...original, datos: [...empresas, empresaMock] });
+    
+    setIsModalOpen(false);
+    
+    try {
+      const res = await api.registrarEmpresa(empresaMock);
+      if (!res.exito) {
+        alert("Error al registrar: " + res.mensaje);
+        if (original) mutate(original);
+      }
+    } catch (e) {
+      alert("Error de conexión");
+      if (original) mutate(original);
+    } finally {
+      setIsSaving(false);
+      setNewEmpresa("");
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-800">
-            Centro de Control <span className="text-[#10B981]">Sindical</span>
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Resumen general de Unión de Acero
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <button 
-            onClick={() => window.print()}
-            className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2.5 rounded-xl font-bold text-sm transition-colors"
-          >
-            <TrendingUp size={18} />
-            Generar Reporte
-          </button>
-          <Link
-            href="/afiliados/nuevo"
-            className="flex items-center gap-2 bg-[#10B981] hover:bg-[#059669] text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-lg shadow-emerald-500/20"
-          >
-            <Plus size={18} />
-            Nuevo Afiliado
-          </Link>
-        </div>
-      </div>
-
-      {error ? (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center text-red-700 font-bold flex flex-col items-center">
-          <AlertCircle size={32} className="mb-2" />
-          <p>Error al cargar los datos</p>
-          <p className="text-sm font-normal mt-1">{error}</p>
-          <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold shadow hover:bg-red-700">Reintentar</button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {statCards.map((stat, i) => (
-            <div key={i} className={`bg-white p-6 rounded-2xl border ${stat.borderColor} shadow-sm flex flex-col gap-4 relative overflow-hidden group`}>
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color} transition-transform group-hover:scale-110`}>
-                <stat.icon size={24} strokeWidth={2.5} />
-              </div>
+      
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-lg font-black text-slate-800 mb-4">Nueva Empresa</h3>
+            <div className="space-y-4">
               <div>
-                <p className="text-sm font-bold text-slate-500">{stat.title}</p>
-                {loading ? (
-                  <div className="h-8 w-16 bg-slate-100 animate-pulse rounded mt-1"></div>
-                ) : (
-                  <h3 className="text-3xl font-black text-slate-800 mt-1">{stat.value}</h3>
-                )}
+                <label className="block text-sm font-bold text-slate-700 mb-2">Nombre de la Empresa</label>
+                <input 
+                  type="text" 
+                  value={newEmpresa}
+                  onChange={(e) => setNewEmpresa(e.target.value)}
+                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#10B981]/20 focus:border-[#10B981]" 
+                  placeholder="Ej. Metalúrgica del Sur" 
+                />
               </div>
-              <div className="absolute -bottom-4 -right-4 opacity-5 pointer-events-none transition-transform group-hover:scale-110">
-                <stat.icon size={100} />
+              <div className="flex justify-end gap-3 mt-6">
+                <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors">Cancelar</button>
+                <button onClick={handleSaveEmpresa} className="px-4 py-2 bg-[#10B981] text-white rounded-xl text-sm font-bold shadow-lg shadow-emerald-500/20 hover:bg-[#059669] transition-colors">Guardar Empresa</button>
               </div>
             </div>
-          ))}
+          </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-bold text-slate-800">Actividad Reciente</h2>
-              <p className="text-xs font-medium text-slate-500">Últimos movimientos del sistema</p>
-            </div>
-            <Link href="/historial" className="text-sm font-bold text-[#10B981] hover:text-[#059669] flex items-center gap-1">
-              Ver todo <ArrowRight size={16} />
-            </Link>
-          </div>
-          
-          <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
-            {loading ? (
-              <Loader2 className="animate-spin text-slate-400 mb-3" size={32} />
-            ) : (
-              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
-                <Clock className="text-slate-400" size={32} />
-              </div>
-            )}
-            <h3 className="text-slate-800 font-bold">{loading ? "Cargando..." : "Sin datos registrados"}</h3>
-            <p className="text-slate-500 text-sm mt-1">{loading ? "Obteniendo información reciente" : "La actividad reciente aparecerá aquí"}</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-slate-800">Empresas</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Administración de las empresas asociadas al sindicato.
+          </p>
+        </div>
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 bg-[#10B981] hover:bg-[#059669] text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-lg shadow-emerald-500/20"
+        >
+          <Plus size={18} />
+          Nueva empresa
+        </button>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-slate-100 flex gap-4 justify-between bg-slate-50/50">
+          <div className="relative w-full sm:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input 
+              type="text"
+              placeholder="Buscar empresa por nombre..."
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#10B981]/20 focus:border-[#10B981] transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-bold text-slate-800">Empresas</h2>
-              <p className="text-xs font-medium text-slate-500">Distribución de afiliados</p>
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="p-12 text-center text-slate-500 flex flex-col items-center">
+              <div className="w-8 h-8 border-4 border-slate-200 border-t-[#10B981] rounded-full animate-spin mb-4"></div>
+              <p className="font-bold">Cargando empresas...</p>
             </div>
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-              <Building2 size={18} />
-            </div>
-          </div>
-
-          <div className="flex-1 flex flex-col items-center justify-center py-8 text-center">
-            {loading ? (
-              <Loader2 className="animate-spin text-slate-400 mb-3" size={32} />
-            ) : (
-              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+          ) : filteredEmpresas.length === 0 ? (
+            <div className="p-16 text-center flex flex-col items-center justify-center">
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
                 <Building2 className="text-slate-400" size={32} />
               </div>
-            )}
-            <h3 className="text-slate-800 font-bold">{loading ? "Cargando..." : ((empresas?.length || 0) > 0 ? `${empresas.length} Empresas` : "Sin datos registrados")}</h3>
-            <p className="text-slate-500 text-sm mt-1">{loading ? "Consultando distribución" : ((empresas?.length || 0) > 0 ? "Empresas con convenios activos" : "Registra empresas para ver distribución")}</p>
-          </div>
+              <h3 className="text-lg font-black text-slate-800 mb-1">Sin empresas registradas</h3>
+              <p className="text-sm text-slate-500 mb-6 max-w-sm mx-auto">
+                No se encontraron empresas asociadas con los parámetros de búsqueda.
+              </p>
+            </div>
+          ) : (
+            <>
+              {/* Desktop Table */}
+              <table className="w-full hidden md:table">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="text-left py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Empresa</th>
+                    <th className="text-left py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Afiliados</th>
+                    <th className="text-right py-3 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredEmpresas.map((empresa, idx) => (
+                    <tr key={empresa.id || idx} className="hover:bg-slate-50/50 transition-colors group">
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold">
+                            {(empresa.nombre || "E").charAt(0).toUpperCase()}
+                          </div>
+                          <span className="font-bold text-slate-800">{empresa.nombre}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="text-sm font-medium text-slate-600">
+                          {empresa.cantidad_afiliados || 0} registrados
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <button className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-all">
+                          <MoreVertical size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden flex flex-col divide-y divide-slate-100">
+                {filteredEmpresas.map((empresa, idx) => (
+                  <div key={empresa.id || idx} className="p-4 flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold shrink-0">
+                          {(empresa.nombre || "E").charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-800">{empresa.nombre}</div>
+                          <div className="text-xs text-slate-500">{empresa.cantidad_afiliados || 0} registrados</div>
+                        </div>
+                      </div>
+                      <button className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-all">
+                        <MoreVertical size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

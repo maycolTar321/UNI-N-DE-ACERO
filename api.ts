@@ -2,6 +2,34 @@ import { Afiliado, ApiResponse, DashboardStats, Empresa } from "./types";
 
 const API_URL = "https://script.google.com/macros/s/AKfycbyGDnWz_znUwnCmpUtDDczRIIgjdSGonDnBFOpaZ2iqtSrPHAnbUR96Vc9Izkfs0wM-Xg/exec";
 
+/**
+ * Los estados extendidos se guardan en observaciones para evitar que el backend
+ * normalice el campo heredado "estado". También leemos el formato antiguo
+ * (metadatos dentro de "estado") para no perder los datos ya registrados.
+ */
+function restaurarMetadatosAfiliado(afiliado: any) {
+  if (!afiliado || typeof afiliado !== "object") return afiliado;
+
+  const campos = ["observaciones", "estado"];
+  for (const campo of campos) {
+    const valor = afiliado[campo];
+    if (typeof valor !== "string" || !valor.includes("|_JSON_|")) continue;
+
+    const partes = valor.split("|_JSON_|");
+    afiliado[campo] = partes[0];
+    try {
+      const extras = JSON.parse(partes.slice(1).join("|_JSON_|"));
+      if (extras && typeof extras === "object" && !Array.isArray(extras)) {
+        Object.assign(afiliado, extras);
+      }
+    } catch (error) {
+      console.error("No se pudieron restaurar los metadatos del afiliado:", error);
+    }
+    break;
+  }
+  return afiliado;
+}
+
 export const api = {
   actualizarVigencia: async (ciOId: string, nuevaVigencia: string): Promise<ApiResponse> => {
     try {
@@ -27,18 +55,8 @@ export const api = {
     try {
       const response = await fetch(`${API_URL}?accion=listarAfiliados`, { cache: 'no-store' });
       const data = await response.json();
-      if (data.datos) {
-        data.datos = data.datos.map((a: any) => {
-          if (a.estado && typeof a.estado === 'string' && a.estado.includes('|_JSON_|')) {
-            const parts = a.estado.split('|_JSON_|');
-            a.estado = parts[0];
-            try {
-              const extra = JSON.parse(parts[1]);
-              Object.assign(a, extra);
-            } catch (e) {}
-          }
-          return a;
-        });
+      if (Array.isArray(data.datos)) {
+        data.datos = data.datos.map((a: any) => restaurarMetadatosAfiliado(a));
       }
       return data;
     } catch (error: any) {
@@ -51,7 +69,7 @@ export const api = {
     try {
       const { estado_afiliacion, estado_operativo, estado_expediente, estado_carnet, documentos, coordenadas_domicilio, coordenadas_empresa, ...baseData } = afiliado as any;
       const extraData = { estado_afiliacion, estado_operativo, estado_expediente, estado_carnet, documentos, coordenadas_domicilio, coordenadas_empresa };
-      baseData.estado = (baseData.estado || '') + '|_JSON_|' + JSON.stringify(extraData);
+      baseData.observaciones = (baseData.observaciones || '').replace(/\|_JSON_\|.*/, '') + '|_JSON_|' + JSON.stringify(extraData);
       
       const response = await fetch(API_URL, {
         method: "POST",
@@ -77,14 +95,7 @@ export const api = {
       const response = await fetch(`${API_URL}?accion=obtenerAfiliado&id=${id}`, { cache: 'no-store' });
       const data = await response.json();
       if (data.datos) {
-        if (data.datos.estado && typeof data.datos.estado === 'string' && data.datos.estado.includes('|_JSON_|')) {
-          const parts = data.datos.estado.split('|_JSON_|');
-          data.datos.estado = parts[0];
-          try {
-            const extra = JSON.parse(parts[1]);
-            Object.assign(data.datos, extra);
-          } catch (e) {}
-        }
+        data.datos = restaurarMetadatosAfiliado(data.datos);
       }
       return data;
     } catch (error: any) {
@@ -96,7 +107,8 @@ export const api = {
     try {
       const { estado_afiliacion, estado_operativo, estado_expediente, estado_carnet, documentos, coordenadas_domicilio, coordenadas_empresa, ...baseData } = datos as any;
       const extraData = { estado_afiliacion, estado_operativo, estado_expediente, estado_carnet, documentos, coordenadas_domicilio, coordenadas_empresa };
-      baseData.estado = (baseData.estado || '').replace(/\|_JSON_\|.*/, '') + '|_JSON_|' + JSON.stringify(extraData);
+      baseData.observaciones = (baseData.observaciones || '').replace(/\|_JSON_\|.*/, '') + '|_JSON_|' + JSON.stringify(extraData);
+      if (typeof baseData.estado === "string") baseData.estado = baseData.estado.replace(/\|_JSON_\|.*/, "");
 
       await fetch(API_URL, {
         method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" },

@@ -34,3 +34,16 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+
+## Corrección de persistencia de estados de afiliación
+
+Los metadatos `estado_afiliacion`, `estado_operativo`, `estado_expediente`, `estado_carnet`,
+`documentos` y coordenadas se serializan ahora dentro del campo `observaciones` usando el
+marcador `|_JSON_|`, y se reconstruyen al listar/consultar afiliados. No se deben serializar
+dentro del campo `estado`, porque el backend puede tratarlo como un estado operativo heredado
+y normalizarlo al guardar. Después de desplegar, probar con un afiliado de prueba y recargar.
+
+Esta corrección presupone que el endpoint de Google Apps Script conserva y devuelve el campo
+`observaciones` en las acciones `registrarAfiliado`, `actualizarAfiliado`, `listarAfiliados`
+y `obtenerAfiliado`. Si el script no persiste esa columna, hay que actualizar también el backend.
