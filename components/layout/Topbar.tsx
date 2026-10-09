@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu, Search, Bell } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface TopbarProps {
   setSidebarOpen: (isOpen: boolean) => void;
@@ -9,6 +9,18 @@ interface TopbarProps {
 
 export function Topbar({ setSidebarOpen }: TopbarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSearch = () => {
+    const term = window.prompt("Ingresa el CI o Código del afiliado para buscar:");
+    if (term) {
+      if (/^\d+$/.test(term.trim())) {
+        router.push(`/afiliados/${term.trim()}`);
+      } else {
+        router.push(`/afiliados`);
+      }
+    }
+  };
 
   const formatPath = (path: string) => {
     if (path === "/") return "Dashboard";
@@ -34,10 +46,10 @@ export function Topbar({ setSidebarOpen }: TopbarProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        <button onClick={() => alert("Búsqueda global no configurada.")} className="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 rounded-lg transition-colors">
+        <button onClick={handleSearch} className="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 rounded-lg transition-colors">
           <Search size={20} />
         </button>
-        <button onClick={() => alert("No tienes notificaciones pendientes.")} className="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 rounded-lg transition-colors relative">
+        <button onClick={() => alert("¡Tienes expedientes pendientes de imprimir carnet!")} className="p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 rounded-lg transition-colors relative">
           <Bell size={20} />
           <span className="absolute top-2 right-2 w-2 h-2 bg-[#10B981] border-2 border-white rounded-full"></span>
         </button>

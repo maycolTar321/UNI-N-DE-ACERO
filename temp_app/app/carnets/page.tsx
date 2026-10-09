@@ -114,7 +114,15 @@ export default function CarnetsPage() {
                   <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                   Afiliado verificado correctamente.
                 </p>
-                <p className="text-blue-700">Puedes previsualizar el diseño a la derecha y emitir el carnet físico.</p>
+                {afiliado.estado_expediente === 'APROBADO' ? (
+                  <p className="text-blue-700">Puedes previsualizar el diseño a la derecha y emitir el carnet físico.</p>
+                ) : (
+                  <div className="bg-amber-100 text-amber-800 p-3 rounded-lg mt-2">
+                    <p className="font-bold">⚠️ Expediente NO aprobado</p>
+                    <p className="mb-2">Debes revisar y aprobar los documentos antes de emitir el carnet.</p>
+                    <a href={`/afiliados/${afiliado.ci}`} className="underline font-bold">Ir a Revisión de Expediente</a>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -235,10 +243,11 @@ export default function CarnetsPage() {
 
               {/* Botones de Acción (No imprimibles) */}
               <div className="flex flex-col sm:flex-row gap-2 w-[340px] print:hidden">
-                <button onClick={() => setShowRenovar(true)} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50">
+                <button disabled={afiliado.estado_expediente !== 'APROBADO'} onClick={() => setShowRenovar(true)} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50">
                   Renovar Vigencia
                 </button>
-                <button onClick={async () => {
+                <button disabled={afiliado.estado_expediente !== 'APROBADO'} onClick={async () => {
+                  if (afiliado.estado_expediente !== 'APROBADO') return;
                   await api.actualizarVigencia(afiliado.ci, vigencia); // Usando API update as example
                   handlePrint();
                 }} className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">

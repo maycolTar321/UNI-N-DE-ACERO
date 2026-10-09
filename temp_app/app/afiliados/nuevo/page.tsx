@@ -206,6 +206,48 @@ export default function NuevoAfiliadoPage() {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         
+        {cameraActive && (
+          <CameraCapture 
+            onConfirm={(img) => { setFotografia(img); setCameraActive(false); }} 
+            onCancel={() => setCameraActive(false)} 
+          />
+        )}
+
+        {/* FOTOGRAFIA */}
+        <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
+          <h2 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-6 pb-4 border-b border-slate-100 flex items-center gap-2">
+            <Camera size={16} /> Fotografía para Carnet
+          </h2>
+          <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
+            <div className="w-32 h-40 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 overflow-hidden flex items-center justify-center shrink-0 relative">
+              {fotografia ? (
+                <img src={fotografia} alt="Foto Carnet" className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-slate-400 flex flex-col items-center">
+                  <Camera size={32} className="mb-2" />
+                  <span className="text-[10px] font-bold text-center">Sin foto<br/>(Requerida)</span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 space-y-4 w-full">
+              <div className="flex flex-wrap gap-3">
+                <button type="button" onClick={() => setCameraActive(true)} className="flex items-center gap-2 px-6 py-3 bg-slate-800 text-white rounded-xl text-sm font-bold shadow-lg shadow-slate-800/20 hover:bg-slate-700 transition-colors">
+                  <Camera size={18} /> {fotografia ? 'Volver a Tomar Fotografía' : 'Tomar Fotografía'}
+                </button>
+                <label className="flex items-center gap-2 px-4 py-3 bg-white border border-slate-300 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors cursor-pointer">
+                  <Upload size={18} /> Subir Archivo
+                  <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                </label>
+                {fotografia && <button type="button" onClick={() => setFotografia("")} className="px-4 py-3 bg-rose-50 text-rose-600 rounded-xl text-sm font-bold hover:bg-rose-100 transition-colors">Quitar Foto</button>}
+              </div>
+              <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
+                El sistema usará esta fotografía automáticamente para el carnet sindical. 
+                <br/><b>Sin foto el expediente se guardará como PENDIENTE.</b>
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* DATOS PERSONALES */}
         <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm">
           <h2 className="text-xs font-black text-slate-400 tracking-widest uppercase mb-6 pb-4 border-b border-slate-100 flex items-center gap-2">
@@ -287,13 +329,13 @@ export default function NuevoAfiliadoPage() {
             <div className="flex justify-between text-sm font-bold">
               <span className="text-slate-600">Progreso del Expediente</span>
               <span className="text-emerald-600">
-                {Object.values(docs).filter(v => v === 'PRESENTADO').length + 0} / 4 requisitos completos
+                {Object.values(docs).filter(v => v === 'PRESENTADO').length + (fotografia ? 1 : 0)} / 5 requisitos completos
               </span>
             </div>
             <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
               <div 
                 className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${((Object.values(docs).filter(v => v === 'PRESENTADO').length + 0) / 4) * 100}%` }}
+                style={{ width: `${((Object.values(docs).filter(v => v === 'PRESENTADO').length + (fotografia ? 1 : 0)) / 5) * 100}%` }}
               ></div>
             </div>
             <p className="text-xs text-slate-500">Los requisitos omitidos temporalmente NO suman al progreso.</p>

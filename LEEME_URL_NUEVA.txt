@@ -1,0 +1,11 @@
+CORRECCION DE URL PARA UNION DE ACERO
+
+Se actualizó lib/api.ts para usar el endpoint de Apps Script que compartiste.
+
+PASOS:
+1. Copia/reemplaza los archivos del proyecto por esta versión, o copia la línea API_URL de lib/api.ts a tu proyecto actual.
+2. Reinicia el servidor local (detén npm run dev y vuelve a ejecutarlo).
+3. En /afiliados, prueba editar un afiliado y guardar.
+4. Si falla, revisa el mensaje exacto que aparece en pantalla. La URL nueva solo funcionará si el Apps Script está implementado con las acciones listarAfiliados y actualizarAfiliado y tiene permiso de acceso a la hoja.
+
+No se puede confirmar el guardado real sin probar contra tu Google Sheet y tu implementación publicada.

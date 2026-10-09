@@ -93,24 +93,26 @@ export function CameraCapture({ onConfirm, onCancel }: CameraCaptureProps) {
               cropY = (canvas.height - cropHeight) / 2;
             }
             
-            const croppedCanvas = document.createElement('canvas');
-            croppedCanvas.width = cropWidth;
-            croppedCanvas.height = cropHeight;
-            const croppedCtx = croppedCanvas.getContext('2d');
-            
-            if (croppedCtx) {
-              // Fondo blanco
-              croppedCtx.fillStyle = '#FFFFFF';
-              croppedCtx.fillRect(0, 0, cropWidth, cropHeight);
+            const FINAL_WIDTH = 120;
+              const FINAL_HEIGHT = 160;
+              const croppedCanvas = document.createElement('canvas');
+              croppedCanvas.width = FINAL_WIDTH;
+              croppedCanvas.height = FINAL_HEIGHT;
+              const croppedCtx = croppedCanvas.getContext('2d');
               
-              // Dibujar la persona sin fondo
-              croppedCtx.drawImage(
-                img, 
-                cropX, cropY, cropWidth, cropHeight, 
-                0, 0, cropWidth, cropHeight
-              );
-              
-              const dataUrl = croppedCanvas.toDataURL('image/jpeg', 0.9); 
+              if (croppedCtx) {
+                // Fondo blanco
+                croppedCtx.fillStyle = '#FFFFFF';
+                croppedCtx.fillRect(0, 0, FINAL_WIDTH, FINAL_HEIGHT);
+                
+                // Dibujar la persona sin fondo
+                croppedCtx.drawImage(
+                  img, 
+                  cropX, cropY, cropWidth, cropHeight, 
+                  0, 0, FINAL_WIDTH, FINAL_HEIGHT
+                );
+                
+                const dataUrl = croppedCanvas.toDataURL('image/jpeg', 0.6); 
               setCapturedImage(dataUrl);
               setProcessing(false);
             }
@@ -146,18 +148,20 @@ export function CameraCapture({ onConfirm, onCancel }: CameraCaptureProps) {
           cropY = (img.height - cropHeight) / 2;
         }
         
-        const croppedCanvas = document.createElement('canvas');
-        croppedCanvas.width = cropWidth;
-        croppedCanvas.height = cropHeight;
-        const croppedCtx = croppedCanvas.getContext('2d');
-        
-        if (croppedCtx) {
-          croppedCtx.drawImage(
-            img, 
-            cropX, cropY, cropWidth, cropHeight, 
-            0, 0, cropWidth, cropHeight
-          );
-          const dataUrl = croppedCanvas.toDataURL('image/jpeg', 0.9); 
+        const FINAL_WIDTH = 120;
+          const FINAL_HEIGHT = 160;
+          const croppedCanvas = document.createElement('canvas');
+          croppedCanvas.width = FINAL_WIDTH;
+          croppedCanvas.height = FINAL_HEIGHT;
+          const croppedCtx = croppedCanvas.getContext('2d');
+          
+          if (croppedCtx) {
+            croppedCtx.drawImage(
+              img, 
+              cropX, cropY, cropWidth, cropHeight, 
+              0, 0, FINAL_WIDTH, FINAL_HEIGHT
+            );
+            const dataUrl = croppedCanvas.toDataURL('image/jpeg', 0.6); 
           setCapturedImage(dataUrl);
           setProcessingError(false);
         }

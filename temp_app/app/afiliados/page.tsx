@@ -48,9 +48,6 @@ export default function AfiliadosPage() {
       if (!res.exito) {
         alert(`Error al guardar: ${res.mensaje}`);
         if (original) mutate(original);
-      } else {
-        const freshData = await api.getAfiliados();
-        mutate(freshData);
       }
     } catch(e) {
       alert("Error de conexión. Se revirtieron los cambios.");
